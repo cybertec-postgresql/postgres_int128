@@ -1,0 +1,1107 @@
+/* int128--1.0.sql */
+
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION int128" to load this file. \quit
+
+--
+-- The type
+--
+
+CREATE TYPE int128;
+
+CREATE FUNCTION int128_in(cstring)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_in'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_out(int128)
+RETURNS cstring
+AS 'MODULE_PATHNAME', 'int128_out'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_recv(internal)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_recv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_send(int128)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'int128_send'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE TYPE int128 (
+    INPUT = int128_in,
+    OUTPUT = int128_out,
+    RECEIVE = int128_recv,
+    SEND = int128_send,
+    INTERNALLENGTH = 16,
+    ALIGNMENT = double,
+    STORAGE = plain,
+    CATEGORY = 'N',
+    DELIMITER = ','
+);
+
+COMMENT ON TYPE int128 IS '128-bit signed integer (-170141183460469231731687303715884105728 to 170141183460469231731687303715884105727)';
+
+--
+-- Comparison functions
+--
+
+CREATE FUNCTION int128_eq(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_eq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_ne(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_ne'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_lt(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_lt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_le(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_le'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gt(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_gt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_ge(int128, int128)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_ge'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_cmp(int128, int128)
+RETURNS integer
+AS 'MODULE_PATHNAME', 'int128_cmp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Arithmetic functions
+--
+
+CREATE FUNCTION int128_pl(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_mi(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_mul(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_div(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_mod(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_mod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_um(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_um'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_abs(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_abs'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gcd(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_gcd'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_lcm(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_lcm'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Bitwise functions
+--
+
+CREATE FUNCTION int128_and(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_and'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_or(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_or'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_xor(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_xor'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_not(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_not'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_shl(int128, integer)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_shl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_shr(int128, integer)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_shr'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Hashing and sort support
+--
+
+CREATE FUNCTION int128_hash(int128)
+RETURNS integer
+AS 'MODULE_PATHNAME', 'int128_hash'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_hash_extended(int128, int8)
+RETURNS int8
+AS 'MODULE_PATHNAME', 'int128_hash_extended'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_sortsupport(internal)
+RETURNS void
+AS 'MODULE_PATHNAME', 'int128_sortsupport'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_in_range(int128, int128, int128, boolean, boolean)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_in_range'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Casts
+--
+
+CREATE FUNCTION int128(int2)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128(int4)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128(int8)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128(numeric)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128(float8)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128(float4)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_from_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int2(int128)
+RETURNS int2
+AS 'MODULE_PATHNAME', 'int128_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int4(int128)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int8(int128)
+RETURNS int8
+AS 'MODULE_PATHNAME', 'int128_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION "numeric"(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION float8(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION float4(int128)
+RETURNS float4
+AS 'MODULE_PATHNAME', 'int128_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (int2 AS int128) WITH FUNCTION int128(int2) AS IMPLICIT;
+CREATE CAST (int4 AS int128) WITH FUNCTION int128(int4) AS IMPLICIT;
+CREATE CAST (int8 AS int128) WITH FUNCTION int128(int8) AS IMPLICIT;
+CREATE CAST (numeric AS int128) WITH FUNCTION int128(numeric) AS ASSIGNMENT;
+CREATE CAST (float8 AS int128) WITH FUNCTION int128(float8) AS ASSIGNMENT;
+CREATE CAST (float4 AS int128) WITH FUNCTION int128(float4) AS ASSIGNMENT;
+
+CREATE CAST (int128 AS int2) WITH FUNCTION int2(int128) AS ASSIGNMENT;
+CREATE CAST (int128 AS int4) WITH FUNCTION int4(int128) AS ASSIGNMENT;
+CREATE CAST (int128 AS int8) WITH FUNCTION int8(int128) AS ASSIGNMENT;
+CREATE CAST (int128 AS numeric) WITH FUNCTION "numeric"(int128) AS IMPLICIT;
+CREATE CAST (int128 AS float8) WITH FUNCTION float8(int128) AS IMPLICIT;
+CREATE CAST (int128 AS float4) WITH FUNCTION float4(int128) AS IMPLICIT;
+
+--
+-- Operators
+--
+
+CREATE OPERATOR = (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_eq,
+    COMMUTATOR = =,
+    NEGATOR = <>,
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel,
+    HASHES,
+    MERGES
+);
+
+CREATE OPERATOR <> (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_ne,
+    COMMUTATOR = <>,
+    NEGATOR = =,
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+CREATE OPERATOR < (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_lt,
+    COMMUTATOR = >,
+    NEGATOR = >=,
+    RESTRICT = scalarltsel,
+    JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR <= (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_le,
+    COMMUTATOR = >=,
+    NEGATOR = >,
+    RESTRICT = scalarlesel,
+    JOIN = scalarlejoinsel
+);
+
+CREATE OPERATOR > (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_gt,
+    COMMUTATOR = <,
+    NEGATOR = <=,
+    RESTRICT = scalargtsel,
+    JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR >= (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_ge,
+    COMMUTATOR = <=,
+    NEGATOR = <,
+    RESTRICT = scalargesel,
+    JOIN = scalargejoinsel
+);
+
+CREATE OPERATOR + (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_pl,
+    COMMUTATOR = +
+);
+
+CREATE OPERATOR - (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_mi
+);
+
+CREATE OPERATOR * (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_mul,
+    COMMUTATOR = *
+);
+
+CREATE OPERATOR / (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_div
+);
+
+CREATE OPERATOR % (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_mod
+);
+
+CREATE OPERATOR - (
+    RIGHTARG = int128,
+    FUNCTION = int128_um
+);
+
+CREATE OPERATOR @ (
+    RIGHTARG = int128,
+    FUNCTION = int128_abs
+);
+
+CREATE OPERATOR & (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_and,
+    COMMUTATOR = &
+);
+
+CREATE OPERATOR | (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_or,
+    COMMUTATOR = |
+);
+
+CREATE OPERATOR # (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_xor,
+    COMMUTATOR = #
+);
+
+CREATE OPERATOR ~ (
+    RIGHTARG = int128,
+    FUNCTION = int128_not
+);
+
+CREATE OPERATOR << (
+    LEFTARG = int128,
+    RIGHTARG = int4,
+    FUNCTION = int128_shl
+);
+
+CREATE OPERATOR >> (
+    LEFTARG = int128,
+    RIGHTARG = int4,
+    FUNCTION = int128_shr
+);
+
+--
+-- SQL-callable functions
+--
+
+CREATE FUNCTION abs(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_abs'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION div(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION mod(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_mod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION gcd(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_gcd'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION lcm(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_lcm'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Aggregate support functions
+--
+
+CREATE FUNCTION int128_smaller(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_smaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_larger(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_larger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_accum(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_accum'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION int128_avg_accum(internal, int128)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_avg_accum'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION int128_avg_combine(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_avg_combine'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION int128_avg_serialize(internal)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'int128_avg_serialize'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_avg_deserialize(bytea, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_avg_deserialize'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_avg(internal)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_avg'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_brin_minmax_multi_distance(internal, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_brin_minmax_multi_distance'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128range_subdiff(int128, int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128range_subdiff'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Aggregates
+--
+
+CREATE AGGREGATE sum(int128) (
+    SFUNC = int128_accum,
+    STYPE = int128,
+    COMBINEFUNC = int128_pl,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE avg(int128) (
+    SFUNC = int128_avg_accum,
+    STYPE = internal,
+    FINALFUNC = int128_avg,
+    COMBINEFUNC = int128_avg_combine,
+    SERIALFUNC = int128_avg_serialize,
+    DESERIALFUNC = int128_avg_deserialize,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE min(int128) (
+    SFUNC = int128_smaller,
+    STYPE = int128,
+    SORTOP = <,
+    COMBINEFUNC = int128_smaller,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE max(int128) (
+    SFUNC = int128_larger,
+    STYPE = int128,
+    SORTOP = >,
+    COMBINEFUNC = int128_larger,
+    PARALLEL = SAFE
+);
+
+--
+-- Operator classes
+--
+
+CREATE OPERATOR CLASS int128_ops
+    DEFAULT FOR TYPE int128 USING btree AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    FUNCTION 1 int128_cmp(int128, int128),
+    FUNCTION 2 int128_sortsupport(internal),
+    FUNCTION 3 int128_in_range(int128, int128, int128, boolean, boolean),
+    FUNCTION 4 btequalimage(oid);
+
+CREATE OPERATOR FAMILY int128_hash_ops USING hash;
+
+CREATE OPERATOR CLASS int128_ops
+    DEFAULT FOR TYPE int128 USING hash FAMILY int128_hash_ops AS
+    OPERATOR 1 =,
+    FUNCTION 1 int128_hash(int128),
+    FUNCTION 2 int128_hash_extended(int128, int8);
+
+CREATE OPERATOR CLASS int128_minmax_ops
+    DEFAULT FOR TYPE int128 USING brin AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    FUNCTION 1 brin_minmax_opcinfo(internal),
+    FUNCTION 2 brin_minmax_add_value(internal, internal, internal, internal),
+    FUNCTION 3 brin_minmax_consistent(internal, internal, internal),
+    FUNCTION 4 brin_minmax_union(internal, internal, internal),
+    STORAGE int128;
+
+CREATE OPERATOR CLASS int128_minmax_multi_ops
+    FOR TYPE int128 USING brin AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    FUNCTION 1 brin_minmax_multi_opcinfo(internal),
+    FUNCTION 2 brin_minmax_multi_add_value(internal, internal, internal, internal),
+    FUNCTION 3 brin_minmax_multi_consistent(internal, internal, internal, integer),
+    FUNCTION 4 brin_minmax_multi_union(internal, internal, internal),
+    FUNCTION 5 brin_minmax_multi_options(internal),
+    FUNCTION 11 int128_brin_minmax_multi_distance(internal, internal),
+    STORAGE int128;
+
+--
+-- GiST
+--
+
+CREATE TYPE int128_gist_key;
+
+CREATE FUNCTION int128_gist_key_in(cstring)
+RETURNS int128_gist_key
+AS 'MODULE_PATHNAME', 'int128_gist_key_in'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_key_out(int128_gist_key)
+RETURNS cstring
+AS 'MODULE_PATHNAME', 'int128_gist_key_out'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE TYPE int128_gist_key (
+    INTERNALLENGTH = 32,
+    ALIGNMENT = double,
+    STORAGE = plain,
+    CATEGORY = 'U',
+    INPUT = int128_gist_key_in,
+    OUTPUT = int128_gist_key_out
+);
+
+CREATE FUNCTION int128_gist_consistent(internal, int128, int2, oid, internal)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_gist_consistent'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_union(internal, internal)
+RETURNS int128_gist_key
+AS 'MODULE_PATHNAME', 'int128_gist_union'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_compress'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_decompress'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_fetch(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_fetch'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_penalty(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_penalty'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_picksplit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gist_same(int128_gist_key, int128_gist_key, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gist_same'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR CLASS int128_gist_ops
+    DEFAULT FOR TYPE int128 USING gist AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    OPERATOR 6 <>,
+    FUNCTION 1 int128_gist_consistent(internal, int128, int2, oid, internal),
+    FUNCTION 2 int128_gist_union(internal, internal),
+    FUNCTION 3 int128_gist_compress(internal),
+    FUNCTION 4 int128_gist_decompress(internal),
+    FUNCTION 5 int128_gist_penalty(internal, internal, internal),
+    FUNCTION 6 int128_gist_picksplit(internal, internal),
+    FUNCTION 7 int128_gist_same(int128_gist_key, int128_gist_key, internal),
+    FUNCTION 9 (int128, int128) int128_gist_fetch(internal),
+    STORAGE int128_gist_key;
+
+--
+-- SP-GiST
+--
+
+CREATE FUNCTION int128_spgist_config(internal, internal)
+RETURNS void
+AS 'MODULE_PATHNAME', 'int128_spgist_config'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_spgist_choose(internal, internal)
+RETURNS void
+AS 'MODULE_PATHNAME', 'int128_spgist_choose'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_spgist_picksplit(internal, internal)
+RETURNS void
+AS 'MODULE_PATHNAME', 'int128_spgist_picksplit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_spgist_inner_consistent(internal, internal)
+RETURNS void
+AS 'MODULE_PATHNAME', 'int128_spgist_inner_consistent'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_spgist_leaf_consistent(internal, internal)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_spgist_leaf_consistent'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR CLASS int128_spgist_ops
+    DEFAULT FOR TYPE int128 USING spgist AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    OPERATOR 6 <>,
+    FUNCTION 1 int128_spgist_config(internal, internal),
+    FUNCTION 2 int128_spgist_choose(internal, internal),
+    FUNCTION 3 int128_spgist_picksplit(internal, internal),
+    FUNCTION 4 int128_spgist_inner_consistent(internal, internal),
+    FUNCTION 5 int128_spgist_leaf_consistent(internal, internal),
+    STORAGE int128;
+
+--
+-- GIN
+--
+
+CREATE FUNCTION int128_gin_extract_value(int128, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gin_extract_value'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gin_extract_query(int128, internal, int2, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_gin_extract_query'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gin_consistent(internal, int2, int128, int4, internal, internal)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'int128_gin_consistent'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_gin_compare_prefix(int128, int128, int2, internal)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_gin_compare_prefix'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR CLASS int128_gin_ops
+    DEFAULT FOR TYPE int128 USING gin AS
+    OPERATOR 1 <,
+    OPERATOR 2 <=,
+    OPERATOR 3 =,
+    OPERATOR 4 >=,
+    OPERATOR 5 >,
+    FUNCTION 1 int128_cmp(int128, int128),
+    FUNCTION 2 int128_gin_extract_value(int128, internal),
+    FUNCTION 3 int128_gin_extract_query(int128, internal, int2, internal, internal),
+    FUNCTION 4 int128_gin_consistent(internal, int2, int128, int4, internal, internal),
+    FUNCTION 5 int128_gin_compare_prefix(int128, int128, int2, internal),
+    STORAGE int128;
+
+--
+-- Mathematical functions
+--
+
+CREATE FUNCTION round(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION round(int128, int)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_round_scale'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION trunc(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION trunc(int128, int)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_trunc_scale'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION ceil(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION ceiling(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION floor(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sign(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_sign'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION power(int128, int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_power'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION pow(int128, int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_power'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sqrt(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_sqrt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION cbrt(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_cbrt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION exp(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_exp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION ln(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_ln'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION log(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_log'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION log10(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_log'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION log(int128, int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_log_base'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION factorial(int128)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_factorial'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sin(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_sin'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION cos(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_cos'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION tan(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_tan'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION cot(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_cot'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION asin(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_asin'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION acos(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_acos'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION atan(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_atan'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION atan2(int128, int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_atan2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sinh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_sinh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION cosh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_cosh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION tanh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_tanh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION asinh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_asinh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION acosh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_acosh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION atanh(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_atanh'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION degrees(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_degrees'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION radians(int128)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_radians'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION bit_count(int128)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_bit_count'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION width_bucket(int128, int128, int128, int)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_width_bucket'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION random(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_random'
+LANGUAGE C VOLATILE STRICT PARALLEL RESTRICTED;
+
+CREATE FUNCTION to_char(int128, text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'int128_to_char'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- Statistical aggregates
+--
+
+CREATE FUNCTION int128_stat_accum(internal, int128)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_stat_accum'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION int128_stat_combine(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_stat_combine'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION int128_stat_serialize(internal)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'int128_stat_serialize'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_stat_deserialize(bytea, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME', 'int128_stat_deserialize'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_var_pop(internal)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_var_pop'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_var_samp(internal)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_var_samp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_stddev_pop(internal)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_stddev_pop'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_stddev_samp(internal)
+RETURNS numeric
+AS 'MODULE_PATHNAME', 'int128_stddev_samp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE AGGREGATE stddev_samp(int128) (
+    SFUNC = int128_stat_accum,
+    STYPE = internal,
+    FINALFUNC = int128_stddev_samp,
+    COMBINEFUNC = int128_stat_combine,
+    SERIALFUNC = int128_stat_serialize,
+    DESERIALFUNC = int128_stat_deserialize,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE stddev_pop(int128) (
+    SFUNC = int128_stat_accum,
+    STYPE = internal,
+    FINALFUNC = int128_stddev_pop,
+    COMBINEFUNC = int128_stat_combine,
+    SERIALFUNC = int128_stat_serialize,
+    DESERIALFUNC = int128_stat_deserialize,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE var_samp(int128) (
+    SFUNC = int128_stat_accum,
+    STYPE = internal,
+    FINALFUNC = int128_var_samp,
+    COMBINEFUNC = int128_stat_combine,
+    SERIALFUNC = int128_stat_serialize,
+    DESERIALFUNC = int128_stat_deserialize,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE var_pop(int128) (
+    SFUNC = int128_stat_accum,
+    STYPE = internal,
+    FINALFUNC = int128_var_pop,
+    COMBINEFUNC = int128_stat_combine,
+    SERIALFUNC = int128_stat_serialize,
+    DESERIALFUNC = int128_stat_deserialize,
+    PARALLEL = SAFE
+);
+
+--
+-- Series, scale and utility functions
+--
+
+CREATE FUNCTION generate_series(int128, int128)
+RETURNS SETOF int128
+AS 'MODULE_PATHNAME', 'int128_generate_series'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION generate_series(int128, int128, int128)
+RETURNS SETOF int128
+AS 'MODULE_PATHNAME', 'int128_generate_series'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION scale(int128)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_scale'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION min_scale(int128)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_min_scale'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION trim_scale(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_identity'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_inc(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_inc'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION int128_dec(int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_dec'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION pg_size_pretty(int128)
+RETURNS text
+AS 'MODULE_PATHNAME', 'int128_pg_size_pretty'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- GiST KNN distance
+--
+
+CREATE FUNCTION int128_dist(int128, int128)
+RETURNS int128
+AS 'MODULE_PATHNAME', 'int128_dist'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR <-> (
+    LEFTARG = int128,
+    RIGHTARG = int128,
+    FUNCTION = int128_dist,
+    COMMUTATOR = <->
+);
+
+CREATE FUNCTION int128_gist_distance(internal, int128, int2, oid, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'int128_gist_distance'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+ALTER OPERATOR FAMILY int128_gist_ops USING gist ADD
+    OPERATOR 15 <-> (int128, int128) FOR ORDER BY int128_ops,
+    FUNCTION 8 (int128, int128) int128_gist_distance(internal, int128, int2, oid, internal);
+
+--
+-- Range type
+--
+
+CREATE TYPE int128range AS RANGE (
+    subtype = int128,
+    subtype_diff = int128range_subdiff
+);

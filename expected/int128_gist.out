@@ -1,0 +1,157 @@
+-- int128: GiST index support
+CREATE EXTENSION IF NOT EXISTS int128;
+NOTICE:  extension "int128" already exists, skipping
+CREATE TABLE int128_gist (v int128);
+INSERT INTO int128_gist
+SELECT g::int128 * 1000000000000000000 FROM generate_series(1, 5000) g;
+INSERT INTO int128_gist VALUES (NULL);
+CREATE INDEX int128_gist_idx ON int128_gist USING gist (v);
+ANALYZE int128_gist;
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM int128_gist WHERE v = '500000000000000000000'::int128;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Only Scan using int128_gist_idx on int128_gist
+   Index Cond: (v = '500000000000000000000'::int128)
+(2 rows)
+
+SELECT * FROM int128_gist WHERE v = '500000000000000000000'::int128;
+           v           
+-----------------------
+ 500000000000000000000
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM int128_gist WHERE v > '4990000000000000000000'::int128
+ORDER BY v LIMIT 3;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: v
+         ->  Bitmap Heap Scan on int128_gist
+               Recheck Cond: (v > '4990000000000000000000'::int128)
+               ->  Bitmap Index Scan on int128_gist_idx
+                     Index Cond: (v > '4990000000000000000000'::int128)
+(7 rows)
+
+SELECT * FROM int128_gist WHERE v > '4990000000000000000000'::int128
+ORDER BY v LIMIT 3;
+           v            
+------------------------
+ 4991000000000000000000
+ 4992000000000000000000
+ 4993000000000000000000
+(3 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM int128_gist
+WHERE v <> '500000000000000000000'::int128;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on int128_gist
+         Recheck Cond: (v <> '500000000000000000000'::int128)
+         ->  Bitmap Index Scan on int128_gist_idx
+               Index Cond: (v <> '500000000000000000000'::int128)
+(5 rows)
+
+SELECT count(*) FROM int128_gist
+WHERE v <> '500000000000000000000'::int128;
+ count 
+-------
+  4999
+(1 row)
+
+RESET enable_seqscan;
+-- index-only scan through the fetch support function
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT v FROM int128_gist WHERE v = '500000000000000000000'::int128;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Only Scan using int128_gist_idx on int128_gist
+   Index Cond: (v = '500000000000000000000'::int128)
+(2 rows)
+
+SELECT v FROM int128_gist WHERE v = '500000000000000000000'::int128;
+           v           
+-----------------------
+ 500000000000000000000
+(1 row)
+
+RESET enable_seqscan;
+--
+-- Extreme values
+--
+CREATE TABLE int128_gist_extreme (v int128);
+INSERT INTO int128_gist_extreme VALUES
+    ('-170141183460469231731687303715884105728'),
+    ('170141183460469231731687303715884105727'),
+    (0), (-1), (1), (NULL);
+CREATE INDEX int128_gist_extreme_idx ON int128_gist_extreme USING gist (v);
+SET enable_seqscan = off;
+SELECT * FROM int128_gist_extreme WHERE v = 0::int128;
+ v 
+---
+ 0
+(1 row)
+
+SELECT * FROM int128_gist_extreme WHERE v < 0::int128 ORDER BY v;
+                    v                     
+------------------------------------------
+ -170141183460469231731687303715884105728
+ -1
+(2 rows)
+
+SELECT * FROM int128_gist_extreme WHERE v > 0::int128 ORDER BY v;
+                    v                    
+-----------------------------------------
+ 1
+ 170141183460469231731687303715884105727
+(2 rows)
+
+RESET enable_seqscan;
+--
+-- KNN ordering
+--
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT v FROM int128_gist WHERE v IS NOT NULL
+ORDER BY v <-> '500300000000000000000'::int128 LIMIT 3;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Limit
+   ->  Index Only Scan using int128_gist_idx on int128_gist
+         Index Cond: (v IS NOT NULL)
+         Order By: (v <-> '500300000000000000000'::int128)
+(4 rows)
+
+SELECT v FROM int128_gist WHERE v IS NOT NULL
+ORDER BY v <-> '500300000000000000000'::int128 LIMIT 3;
+           v           
+-----------------------
+ 500000000000000000000
+ 501000000000000000000
+ 499000000000000000000
+(3 rows)
+
+RESET enable_seqscan;
+--
+-- Exclusion constraint
+--
+CREATE TABLE int128_gist_excl (v int128, EXCLUDE USING gist (v WITH =));
+INSERT INTO int128_gist_excl VALUES (1);
+INSERT INTO int128_gist_excl VALUES (1);
+ERROR:  conflicting key value violates exclusion constraint "int128_gist_excl_v_excl"
+DETAIL:  Key (v)=(1) conflicts with existing key (v)=(1).
+INSERT INTO int128_gist_excl VALUES (2);
+SELECT * FROM int128_gist_excl ORDER BY v;
+ v 
+---
+ 1
+ 2
+(2 rows)
+
+DROP TABLE int128_gist, int128_gist_extreme, int128_gist_excl;

@@ -1,0 +1,132 @@
+-- int128: SP-GiST index support
+CREATE EXTENSION IF NOT EXISTS int128;
+NOTICE:  extension "int128" already exists, skipping
+CREATE TABLE int128_spgist (v int128);
+INSERT INTO int128_spgist
+SELECT g::int128 * 1000000000000000000 FROM generate_series(1, 5000) g;
+INSERT INTO int128_spgist VALUES (NULL);
+CREATE INDEX int128_spgist_idx ON int128_spgist USING spgist (v);
+ANALYZE int128_spgist;
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM int128_spgist WHERE v = '500000000000000000000'::int128;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Index Scan using int128_spgist_idx on int128_spgist
+   Index Cond: (v = '500000000000000000000'::int128)
+(2 rows)
+
+SELECT * FROM int128_spgist WHERE v = '500000000000000000000'::int128;
+           v           
+-----------------------
+ 500000000000000000000
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM int128_spgist WHERE v > '4990000000000000000000'::int128
+ORDER BY v LIMIT 3;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: v
+         ->  Bitmap Heap Scan on int128_spgist
+               Recheck Cond: (v > '4990000000000000000000'::int128)
+               ->  Bitmap Index Scan on int128_spgist_idx
+                     Index Cond: (v > '4990000000000000000000'::int128)
+(7 rows)
+
+SELECT * FROM int128_spgist WHERE v > '4990000000000000000000'::int128
+ORDER BY v LIMIT 3;
+           v            
+------------------------
+ 4991000000000000000000
+ 4992000000000000000000
+ 4993000000000000000000
+(3 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM int128_spgist
+WHERE v <> '500000000000000000000'::int128;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on int128_spgist
+         Recheck Cond: (v <> '500000000000000000000'::int128)
+         ->  Bitmap Index Scan on int128_spgist_idx
+               Index Cond: (v <> '500000000000000000000'::int128)
+(5 rows)
+
+SELECT count(*) FROM int128_spgist
+WHERE v <> '500000000000000000000'::int128;
+ count 
+-------
+  4999
+(1 row)
+
+RESET enable_seqscan;
+--
+-- Extreme values
+--
+CREATE TABLE int128_spgist_extreme (v int128);
+INSERT INTO int128_spgist_extreme VALUES
+    ('-170141183460469231731687303715884105728'),
+    ('170141183460469231731687303715884105727'),
+    (0), (-1), (1), (NULL);
+CREATE INDEX int128_spgist_extreme_idx ON int128_spgist_extreme USING spgist (v);
+SET enable_seqscan = off;
+SELECT * FROM int128_spgist_extreme WHERE v = 0::int128;
+ v 
+---
+ 0
+(1 row)
+
+SELECT * FROM int128_spgist_extreme WHERE v < 0::int128 ORDER BY v;
+                    v                     
+------------------------------------------
+ -170141183460469231731687303715884105728
+ -1
+(2 rows)
+
+SELECT * FROM int128_spgist_extreme WHERE v > 0::int128 ORDER BY v;
+                    v                    
+-----------------------------------------
+ 1
+ 170141183460469231731687303715884105727
+(2 rows)
+
+RESET enable_seqscan;
+--
+-- All-same tuples (exercises the allTheSame split path)
+--
+CREATE TABLE int128_spgist_same (v int128);
+INSERT INTO int128_spgist_same SELECT 5::int128 FROM generate_series(1, 1000);
+CREATE INDEX int128_spgist_same_idx ON int128_spgist_same USING spgist (v);
+SET enable_seqscan = off;
+SELECT count(*) FROM int128_spgist_same WHERE v = 5::int128;
+ count 
+-------
+  1000
+(1 row)
+
+INSERT INTO int128_spgist_same VALUES (4), (6);
+SELECT count(*) FROM int128_spgist_same WHERE v < 5::int128;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM int128_spgist_same WHERE v = 5::int128;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM int128_spgist_same WHERE v > 5::int128;
+ count 
+-------
+     1
+(1 row)
+
+RESET enable_seqscan;
+DROP TABLE int128_spgist, int128_spgist_extreme, int128_spgist_same;

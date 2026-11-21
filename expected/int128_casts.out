@@ -1,0 +1,181 @@
+-- int128: casts
+CREATE EXTENSION IF NOT EXISTS int128;
+NOTICE:  extension "int128" already exists, skipping
+SET extra_float_digits = 0;
+--
+-- Implicit casts from the integer types
+--
+SELECT 1::int2::int128, 1::int4::int128, 1::int8::int128;
+ int128 | int128 | int128 
+--------+--------+--------
+ 1      | 1      | 1
+(1 row)
+
+SELECT 1::int2 + 1::int128, 1::int4 + 1::int128, 1::int8 + 1::int128;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ 2        | 2        | 2
+(1 row)
+
+SELECT 1::int128 = 1::int2, 1::int128 = 1::int4, 1::int128 = 1::int8;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ t        | t        | t
+(1 row)
+
+--
+-- numeric -> int128 (rounds half away from zero, like numeric -> int8)
+--
+SELECT 2.5::numeric::int128, (-2.5)::numeric::int128,
+       3.5::numeric::int128, (-3.5)::numeric::int128,
+       1.4::numeric::int128, (-1.4)::numeric::int128;
+ int128 | int128 | int128 | int128 | int128 | int128 
+--------+--------+--------+--------+--------+--------
+ 3      | -3     | 4      | -4     | 1      | -1
+(1 row)
+
+SELECT 0::numeric::int128, (-0.4)::numeric::int128;
+ int128 | int128 
+--------+--------
+ 0      | 0
+(1 row)
+
+SELECT 1e30::numeric::int128;
+             int128              
+---------------------------------
+ 1000000000000000000000000000000
+(1 row)
+
+SELECT 1e40::numeric::int128;
+ERROR:  value "10000000000000000000000000000000000000000" is out of range for type int128
+SELECT 'NaN'::numeric::int128;
+ERROR:  cannot convert NaN to type int128
+SELECT 'Infinity'::numeric::int128;
+ERROR:  int128 out of range
+SELECT '-Infinity'::numeric::int128;
+ERROR:  int128 out of range
+--
+-- float8/float4 -> int128 (uses rint, like float8 -> int8)
+--
+SELECT 1.9::float8::int128, (-1.9)::float8::int128,
+       1.5::float8::int128, 2.5::float8::int128, 3.5::float8::int128;
+ int128 | int128 | int128 | int128 | int128 
+--------+--------+--------+--------+--------
+ 2      | -2     | 2      | 2      | 4
+(1 row)
+
+SELECT 1e30::float8::int128;
+             int128              
+---------------------------------
+ 1000000000000000019884624838656
+(1 row)
+
+SELECT 1e40::float8::int128;
+ERROR:  int128 out of range
+SELECT 'NaN'::float8::int128;
+ERROR:  cannot convert NaN to type int128
+SELECT 'Infinity'::float8::int128;
+ERROR:  int128 out of range
+SELECT 1.9::float4::int128, (-1.9)::float4::int128;
+ int128 | int128 
+--------+--------
+ 2      | -2
+(1 row)
+
+--
+-- int128 -> numeric
+--
+SELECT 42::int128::numeric;
+ numeric 
+---------
+      42
+(1 row)
+
+SELECT '170141183460469231731687303715884105727'::int128::numeric;
+                 numeric                 
+-----------------------------------------
+ 170141183460469231731687303715884105727
+(1 row)
+
+SELECT '-170141183460469231731687303715884105728'::int128::numeric;
+                 numeric                  
+------------------------------------------
+ -170141183460469231731687303715884105728
+(1 row)
+
+--
+-- int128 -> float8/float4
+--
+SELECT 42::int128::float8, 42::int128::float4;
+ float8 | float4 
+--------+--------
+     42 |     42
+(1 row)
+
+SELECT '170141183460469231731687303715884105727'::int128::float8;
+        float8        
+----------------------
+ 1.70141183460469e+38
+(1 row)
+
+--
+-- int128 -> smaller integer types
+--
+SELECT 123::int128::int2, 123::int128::int4, 123::int128::int8;
+ int2 | int4 | int8 
+------+------+------
+  123 |  123 |  123
+(1 row)
+
+SELECT 40000::int128::int2;
+ERROR:  smallint out of range
+SELECT 3000000000::int128::int4;
+ERROR:  integer out of range
+SELECT 9223372036854775808::int128::int8;
+ERROR:  bigint out of range
+SELECT '-40000'::int128::int2;
+ERROR:  smallint out of range
+SELECT '-3000000000'::int128::int4;
+ERROR:  integer out of range
+SELECT '-9223372036854775809'::int128::int8;
+ERROR:  bigint out of range
+--
+-- Assignment casts
+--
+CREATE TABLE int128_cast_test (v int128);
+INSERT INTO int128_cast_test VALUES (1::int8), (2::int4), (3::int2), (4::numeric);
+SELECT * FROM int128_cast_test ORDER BY v;
+ v 
+---
+ 1
+ 2
+ 3
+ 4
+(4 rows)
+
+ALTER TABLE int128_cast_test ALTER COLUMN v TYPE int8;
+SELECT * FROM int128_cast_test ORDER BY v;
+ v 
+---
+ 1
+ 2
+ 3
+ 4
+(4 rows)
+
+DROP TABLE int128_cast_test;
+--
+-- Text I/O casts
+--
+SELECT '123'::text::int128;
+ int128 
+--------
+ 123
+(1 row)
+
+SELECT 123::int128::text;
+ text 
+------
+ 123
+(1 row)
+

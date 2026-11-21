@@ -1,0 +1,5 @@
+# int128 extension
+comment = '128-bit signed integer type (-170141183460469231731687303715884105728 to 170141183460469231731687303715884105727) with btree, hash, GiST, SP-GiST, GIN and BRIN support'
+default_version = '1.0'
+module_pathname = '$libdir/int128'
+relocatable = true

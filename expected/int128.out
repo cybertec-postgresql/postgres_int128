@@ -1,0 +1,421 @@
+-- int128: type I/O, arithmetic, comparison, bitwise, aggregates
+CREATE EXTENSION IF NOT EXISTS int128;
+--
+-- Input/output and range
+--
+SELECT '0'::int128, '1'::int128, '-1'::int128;
+ int128 | int128 | int128 
+--------+--------+--------
+ 0      | 1      | -1
+(1 row)
+
+SELECT '170141183460469231731687303715884105727'::int128 AS max;
+                   max                   
+-----------------------------------------
+ 170141183460469231731687303715884105727
+(1 row)
+
+SELECT '-170141183460469231731687303715884105728'::int128 AS min;
+                   min                    
+------------------------------------------
+ -170141183460469231731687303715884105728
+(1 row)
+
+SELECT ' 42 '::int128, '+42'::int128, '-0'::int128;
+ int128 | int128 | int128 
+--------+--------+--------
+ 42     | 42     | 0
+(1 row)
+
+SELECT '170141183460469231731687303715884105728'::int128;
+ERROR:  value "170141183460469231731687303715884105728" is out of range for type int128
+LINE 1: SELECT '170141183460469231731687303715884105728'::int128;
+               ^
+SELECT '-170141183460469231731687303715884105729'::int128;
+ERROR:  value "-170141183460469231731687303715884105729" is out of range for type int128
+LINE 1: SELECT '-170141183460469231731687303715884105729'::int128;
+               ^
+SELECT 'abc'::int128;
+ERROR:  invalid input syntax for type int128: "abc"
+LINE 1: SELECT 'abc'::int128;
+               ^
+SELECT ''::int128;
+ERROR:  invalid input syntax for type int128: ""
+LINE 1: SELECT ''::int128;
+               ^
+SELECT '1.5'::int128;
+ERROR:  invalid input syntax for type int128: "1.5"
+LINE 1: SELECT '1.5'::int128;
+               ^
+SELECT '1e10'::int128;
+ERROR:  invalid input syntax for type int128: "1e10"
+LINE 1: SELECT '1e10'::int128;
+               ^
+--
+-- Type properties
+--
+SELECT pg_typeof(1::int128), pg_typeof(1::int128 + 1);
+ pg_typeof | pg_typeof 
+-----------+-----------
+ int128    | int128
+(1 row)
+
+SELECT typlen, typbyval, typalign, typstorage, typcategory
+FROM pg_type WHERE typname = 'int128';
+ typlen | typbyval | typalign | typstorage | typcategory 
+--------+----------+----------+------------+-------------
+     16 | f        | d        | p          | N
+(1 row)
+
+--
+-- Arithmetic
+--
+SELECT 1::int128 + 2, 1::int128 - 2, 2::int128 * 3, 7::int128 / 2, 7::int128 % 2;
+ ?column? | ?column? | ?column? | ?column? | ?column? 
+----------+----------+----------+----------+----------
+ 3        | -1       | 6        | 3        | 1
+(1 row)
+
+SELECT (-7::int128) / 2, (-7::int128) % 2;
+ ?column? | ?column? 
+----------+----------
+ -3       | -1
+(1 row)
+
+SELECT -5::int128, abs(-5::int128), @(-5::int128);
+ ?column? | abs | ?column? 
+----------+-----+----------
+ -5       | 5   | 5
+(1 row)
+
+SELECT div(7::int128, 2), mod(7::int128, 2);
+ div | mod 
+-----+-----
+ 3   | 1
+(1 row)
+
+SELECT gcd(12::int128, 18), lcm(4::int128, 6);
+ gcd | lcm 
+-----+-----
+ 6   | 12
+(1 row)
+
+SELECT gcd(0::int128, 5), lcm(0::int128, 5);
+ gcd | lcm 
+-----+-----
+ 5   | 0
+(1 row)
+
+SELECT gcd(-12::int128, 18), lcm(-4::int128, 6);
+ gcd | lcm 
+-----+-----
+ 6   | 12
+(1 row)
+
+-- overflow
+SELECT '170141183460469231731687303715884105727'::int128 + 1;
+ERROR:  int128 out of range
+SELECT '-170141183460469231731687303715884105728'::int128 - 1;
+ERROR:  int128 out of range
+SELECT '170141183460469231731687303715884105727'::int128 * 2;
+ERROR:  int128 out of range
+SELECT '-170141183460469231731687303715884105728'::int128 / -1;
+ERROR:  int128 out of range
+SELECT '-170141183460469231731687303715884105728'::int128 % -1;
+ ?column? 
+----------
+ 0
+(1 row)
+
+SELECT abs('-170141183460469231731687303715884105728'::int128);
+ERROR:  int128 out of range
+SELECT -('-170141183460469231731687303715884105728'::int128);
+ERROR:  int128 out of range
+SELECT 1::int128 / 0;
+ERROR:  division by zero
+SELECT 1::int128 % 0;
+ERROR:  division by zero
+--
+-- Bitwise operators
+--
+SELECT 12::int128 & 10, 12::int128 | 10, 12::int128 # 10, ~0::int128;
+ ?column? | ?column? | ?column? | ?column? 
+----------+----------+----------+----------
+ 8        | 14       | 6        | -1
+(1 row)
+
+SELECT 1::int128 << 10, 1024::int128 >> 3, (-8::int128) >> 1;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ 1024     | 128      | -4
+(1 row)
+
+SELECT 1::int128 << 127, 1::int128 << 128, 1::int128 << -1;
+                 ?column?                 | ?column? | ?column? 
+------------------------------------------+----------+----------
+ -170141183460469231731687303715884105728 | 0        | 0
+(1 row)
+
+SELECT (-1::int128) >> 127, (-1::int128) >> 128, (-1::int128) >> -1;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ -1       | -1       | -2
+(1 row)
+
+--
+-- Comparison operators
+--
+SELECT 1::int128 = 1, 1::int128 <> 2, 1::int128 < 2, 2::int128 <= 2,
+       3::int128 > 2, 3::int128 >= 3;
+ ?column? | ?column? | ?column? | ?column? | ?column? | ?column? 
+----------+----------+----------+----------+----------+----------
+ t        | t        | t        | t        | t        | t
+(1 row)
+
+SELECT int128_cmp(1::int128, 2::int128),
+       int128_cmp(2::int128, 2::int128),
+       int128_cmp(3::int128, 2::int128);
+ int128_cmp | int128_cmp | int128_cmp 
+------------+------------+------------
+         -1 |          0 |          1
+(1 row)
+
+--
+-- Sorting
+--
+SELECT v FROM (VALUES (3::int128), (-1::int128), (2::int128), (0::int128)) s(v)
+ORDER BY v;
+ v  
+----
+ -1
+ 0
+ 2
+ 3
+(4 rows)
+
+SELECT v FROM (VALUES (3::int128), (-1::int128), (2::int128), (0::int128)) s(v)
+ORDER BY v DESC;
+ v  
+----
+ 3
+ 2
+ 0
+ -1
+(4 rows)
+
+--
+-- Hashing
+--
+SELECT int128_hash('0'::int128) = int128_hash('0'::int128) AS same,
+       int128_hash('1'::int128) <> int128_hash('2'::int128) AS different;
+ same | different 
+------+-----------
+ t    | t
+(1 row)
+
+SELECT int128_hash_extended('0'::int128, 0) = int128_hash_extended('0'::int128, 0) AS same,
+       int128_hash_extended('0'::int128, 0) <> int128_hash_extended('0'::int128, 1) AS different;
+ same | different 
+------+-----------
+ t    | t
+(1 row)
+
+--
+-- Binary send format
+--
+SELECT int128_send('1'::int128);
+            int128_send             
+------------------------------------
+ \x00000000000000000000000000000001
+(1 row)
+
+SELECT int128_send('-1'::int128);
+            int128_send             
+------------------------------------
+ \xffffffffffffffffffffffffffffffff
+(1 row)
+
+SELECT int128_send('170141183460469231731687303715884105727'::int128);
+            int128_send             
+------------------------------------
+ \x7fffffffffffffffffffffffffffffff
+(1 row)
+
+--
+-- Aggregates
+--
+CREATE TABLE int128_agg (v int128);
+INSERT INTO int128_agg VALUES (1), (2), (3), (NULL), (-4);
+SELECT count(v), sum(v), avg(v), min(v), max(v) FROM int128_agg;
+ count | sum |          avg           | min | max 
+-------+-----+------------------------+-----+-----
+     4 | 2   | 0.50000000000000000000 | -4  | 3
+(1 row)
+
+SELECT sum(v), avg(v), min(v), max(v) FROM int128_agg WHERE false;
+ sum | avg | min | max 
+-----+-----+-----+-----
+     |     |     | 
+(1 row)
+
+SELECT sum(v) FROM (VALUES ('170141183460469231731687303715884105727'::int128),
+                           (1::int128)) s(v);
+ERROR:  int128 out of range
+SELECT avg(v) FROM (VALUES (1::int128), (2::int128)) s(v);
+        avg         
+--------------------
+ 1.5000000000000000
+(1 row)
+
+SELECT avg(v) FROM (VALUES (-1::int128), (-2::int128)) s(v);
+         avg         
+---------------------
+ -1.5000000000000000
+(1 row)
+
+DROP TABLE int128_agg;
+--
+-- Window functions (in_range support)
+--
+SELECT v, count(*) OVER (ORDER BY v RANGE BETWEEN 2 PRECEDING AND CURRENT ROW)
+FROM (VALUES (1::int128), (2::int128), (5::int128), (6::int128), (10::int128)) s(v)
+ORDER BY v;
+ v  | count 
+----+-------
+ 1  |     1
+ 2  |     2
+ 5  |     1
+ 6  |     2
+ 10 |     1
+(5 rows)
+
+SELECT v, count(*) OVER (ORDER BY v RANGE BETWEEN CURRENT ROW AND 2 FOLLOWING)
+FROM (VALUES (1::int128), (2::int128), (5::int128), (6::int128), (10::int128)) s(v)
+ORDER BY v;
+ v  | count 
+----+-------
+ 1  |     2
+ 2  |     1
+ 5  |     2
+ 6  |     1
+ 10 |     1
+(5 rows)
+
+SELECT v, count(*) OVER (ORDER BY v RANGE BETWEEN 2 PRECEDING AND 2 FOLLOWING)
+FROM (VALUES (1::int128), (2::int128), (5::int128), (6::int128), (10::int128)) s(v)
+ORDER BY v;
+ v  | count 
+----+-------
+ 1  |     2
+ 2  |     2
+ 5  |     2
+ 6  |     2
+ 10 |     1
+(5 rows)
+
+--
+-- Type integration
+--
+SELECT v, count(*) FROM (VALUES (1::int128), (1::int128), (2::int128)) s(v)
+GROUP BY v ORDER BY v;
+ v | count 
+---+-------
+ 1 |     2
+ 2 |     1
+(2 rows)
+
+SELECT DISTINCT v FROM (VALUES (1::int128), (1::int128), (2::int128)) s(v)
+ORDER BY v;
+ v 
+---
+ 1
+ 2
+(2 rows)
+
+SELECT ARRAY[1::int128, 2::int128] @> ARRAY[2::int128];
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT (1::int128, 2::int128) < (1::int128, 3::int128);
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE DOMAIN int128_pos AS int128 CHECK (VALUE > 0);
+SELECT 5::int128_pos;
+ int128_pos 
+------------
+ 5
+(1 row)
+
+SELECT (-5)::int128_pos;
+ERROR:  value for domain int128_pos violates check constraint "int128_pos_check"
+DROP DOMAIN int128_pos;
+COPY (SELECT v FROM (VALUES (1::int128), (-2::int128), (3::int128)) s(v)
+      ORDER BY v) TO STDOUT;
+-2
+1
+3
+--
+-- Operator class validation
+--
+SELECT opcname, amvalidate(oid) FROM pg_opclass
+WHERE opcname LIKE 'int128%' ORDER BY 1;
+         opcname         | amvalidate 
+-------------------------+------------
+ int128_gin_ops          | t
+ int128_gist_ops         | t
+ int128_minmax_multi_ops | t
+ int128_minmax_ops       | t
+ int128_ops              | t
+ int128_ops              | t
+ int128_spgist_ops       | t
+(7 rows)
+
+--
+-- Range type support
+--
+SELECT '[1,10)'::int128range @> 5::int128;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT int128range(1::int128, 10::int128);
+ int128range 
+-------------
+ [1,10)
+(1 row)
+
+SELECT lower('[1,10)'::int128range), upper('[1,10)'::int128range);
+ lower | upper 
+-------+-------
+ 1     | 10
+(1 row)
+
+SELECT '[1,10)'::int128range && '[5,15)'::int128range;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,10)}'::int128multirange;
+ int128multirange 
+------------------
+ {[1,10)}
+(1 row)
+
+CREATE TABLE int128_range_test (r int128range);
+INSERT INTO int128_range_test VALUES ('[1,10)'), ('[5,15)');
+CREATE INDEX int128_range_test_idx ON int128_range_test USING gist (r);
+SELECT * FROM int128_range_test WHERE r && '[7,8)'::int128range ORDER BY r;
+   r    
+--------
+ [1,10)
+ [5,15)
+(2 rows)
+
+DROP TABLE int128_range_test;

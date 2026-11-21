@@ -1,0 +1,250 @@
+-- int128: mathematical and statistical functions
+CREATE EXTENSION IF NOT EXISTS int128;
+NOTICE:  extension "int128" already exists, skipping
+SET extra_float_digits = 0;
+--
+-- Rounding and truncation
+--
+SELECT round(12345::int128, -2), round(12355::int128, -2),
+       round((-12355)::int128, -2), round(123::int128, 2);
+ round | round | round  | round 
+-------+-------+--------+-------
+ 12300 | 12400 | -12400 | 123
+(1 row)
+
+SELECT trunc(12355::int128, -2), trunc((-12355)::int128, -2),
+       trunc(123::int128, 2);
+ trunc | trunc  | trunc 
+-------+--------+-------
+ 12300 | -12300 | 123
+(1 row)
+
+SELECT round(123::int128), trunc(123::int128), ceil(123::int128),
+       ceiling(123::int128), floor(123::int128);
+ round | trunc | ceil | ceiling | floor 
+-------+-------+------+---------+-------
+ 123   | 123   | 123  | 123     | 123
+(1 row)
+
+SELECT sign((-5)::int128), sign(0::int128), sign(5::int128);
+ sign | sign | sign 
+------+------+------
+ -1   | 0    | 1
+(1 row)
+
+SELECT round(5::int128, -1), round((-5)::int128, -1),
+       round(4::int128, -1), round((-4)::int128, -1);
+ round | round | round | round 
+-------+-------+-------+-------
+ 10    | -10   | 0     | 0
+(1 row)
+
+SELECT round('170141183460469231731687303715884105727'::int128, -1);
+ERROR:  int128 out of range
+SELECT round('-170141183460469231731687303715884105728'::int128, -1);
+ERROR:  int128 out of range
+SELECT trunc('-170141183460469231731687303715884105728'::int128, -1);
+                  trunc                   
+------------------------------------------
+ -170141183460469231731687303715884105720
+(1 row)
+
+--
+-- Powers, roots and logarithms
+--
+SELECT power(2::int128, 10::int128), pow(2::int128, 10::int128),
+       power(2::int128, (-1)::int128);
+       power        |        pow         |       power        
+--------------------+--------------------+--------------------
+ 1024.0000000000000 | 1024.0000000000000 | 0.5000000000000000
+(1 row)
+
+SELECT sqrt(144::int128), sqrt(2::int128);
+        sqrt        |       sqrt        
+--------------------+-------------------
+ 12.000000000000000 | 1.414213562373095
+(1 row)
+
+SELECT cbrt(27::int128);
+ cbrt 
+------
+    3
+(1 row)
+
+SELECT exp(1::int128), ln(1::int128), log(100::int128),
+       log10(1000::int128), log(2::int128, 8::int128);
+        exp         |         ln         |        log         |       log10        |        log         
+--------------------+--------------------+--------------------+--------------------+--------------------
+ 2.7182818284590452 | 0.0000000000000000 | 2.0000000000000000 | 3.0000000000000000 | 3.0000000000000000
+(1 row)
+
+SELECT factorial(5::int128), factorial(0::int128);
+ factorial | factorial 
+-----------+-----------
+       120 |         1
+(1 row)
+
+SELECT factorial((-1)::int128);
+ERROR:  factorial of a negative number is undefined
+--
+-- Trigonometric functions
+--
+SELECT sin(0::int128), cos(0::int128), tan(0::int128), cot(1::int128);
+ sin | cos | tan |        cot        
+-----+-----+-----+-------------------
+   0 |   1 |   0 | 0.642092615934331
+(1 row)
+
+SELECT asin(1::int128), acos(1::int128), atan(1::int128),
+       atan2(1::int128, 1::int128);
+      asin       | acos |       atan        |       atan2       
+-----------------+------+-------------------+-------------------
+ 1.5707963267949 |    0 | 0.785398163397448 | 0.785398163397448
+(1 row)
+
+SELECT sinh(0::int128), cosh(0::int128), tanh(0::int128),
+       asinh(0::int128), acosh(1::int128), atanh(0::int128);
+ sinh | cosh | tanh | asinh | acosh | atanh 
+------+------+------+-------+-------+-------
+    0 |    1 |    0 |     0 |     0 |     0
+(1 row)
+
+SELECT degrees(1::int128), radians(180::int128);
+     degrees      |     radians      
+------------------+------------------
+ 57.2957795130823 | 3.14159265358979
+(1 row)
+
+--
+-- Integer utilities
+--
+SELECT bit_count(0::int128), bit_count(1::int128),
+       bit_count(255::int128), bit_count((-1)::int128);
+ bit_count | bit_count | bit_count | bit_count 
+-----------+-----------+-----------+-----------
+         0 |         1 |         8 |       128
+(1 row)
+
+SELECT width_bucket(5::int128, 0::int128, 10::int128, 2),
+       width_bucket((-1)::int128, 0::int128, 10::int128, 2),
+       width_bucket(10::int128, 0::int128, 10::int128, 2);
+ width_bucket | width_bucket | width_bucket 
+--------------+--------------+--------------
+            2 |            0 |            3
+(1 row)
+
+SELECT width_bucket(0::int128, 0::int128, 10::int128, 0);
+ERROR:  count must be greater than zero
+SELECT width_bucket(0::int128, 10::int128, 10::int128, 2);
+ERROR:  lower bound cannot equal upper bound
+SELECT random(5::int128, 5::int128);
+ random 
+--------
+ 5
+(1 row)
+
+SELECT random(1::int128, 10::int128) BETWEEN 1 AND 10 AS in_range;
+ in_range 
+----------
+ t
+(1 row)
+
+SELECT random(10::int128, 1::int128);
+ERROR:  lower bound must be less than or equal to upper bound
+SELECT to_char(12345::int128, 'FM999,999');
+ to_char 
+---------
+ 12,345
+(1 row)
+
+--
+-- Series and utility functions
+--
+SELECT generate_series(1::int128, 5::int128);
+ generate_series 
+-----------------
+ 1
+ 2
+ 3
+ 4
+ 5
+(5 rows)
+
+SELECT generate_series(1::int128, 10::int128, 3::int128);
+ generate_series 
+-----------------
+ 1
+ 4
+ 7
+ 10
+(4 rows)
+
+SELECT generate_series(5::int128, 1::int128, (-2)::int128);
+ generate_series 
+-----------------
+ 5
+ 3
+ 1
+(3 rows)
+
+SELECT generate_series(1::int128, 5::int128, 0::int128);
+ERROR:  step size cannot equal zero
+SELECT scale(123::int128), min_scale(123::int128), trim_scale(123::int128);
+ scale | min_scale | trim_scale 
+-------+-----------+------------
+     0 |         0 | 123
+(1 row)
+
+SELECT int128_inc(5::int128), int128_dec(5::int128);
+ int128_inc | int128_dec 
+------------+------------
+ 6          | 4
+(1 row)
+
+SELECT int128_inc('170141183460469231731687303715884105727'::int128);
+ERROR:  int128 out of range
+SELECT int128_dec('-170141183460469231731687303715884105728'::int128);
+ERROR:  int128 out of range
+SELECT pg_size_pretty(1024::int128), pg_size_pretty(1048576::int128);
+ pg_size_pretty | pg_size_pretty 
+----------------+----------------
+ 1024 bytes     | 1024 kB
+(1 row)
+
+SELECT int128_dist(10::int128, 3::int128), 10::int128 <-> 3::int128;
+ int128_dist | ?column? 
+-------------+----------
+ 7           | 7
+(1 row)
+
+--
+-- Statistical aggregates
+--
+SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
+FROM (VALUES (1::int128), (2::int128), (3::int128), (4::int128)) s(v);
+    stddev_samp     |     stddev_pop     |      var_samp      |      var_pop       
+--------------------+--------------------+--------------------+--------------------
+ 1.2909944487358056 | 1.1180339887498948 | 1.6666666666666667 | 1.2500000000000000
+(1 row)
+
+SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
+FROM (VALUES (1::int128)) s(v);
+ stddev_samp |       stddev_pop       | var_samp |        var_pop         
+-------------+------------------------+----------+------------------------
+             | 0.00000000000000000000 |          | 0.00000000000000000000
+(1 row)
+
+SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
+FROM (VALUES (1::int128), (NULL)) s(v);
+ stddev_samp |       stddev_pop       | var_samp |        var_pop         
+-------------+------------------------+----------+------------------------
+             | 0.00000000000000000000 |          | 0.00000000000000000000
+(1 row)
+
+SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
+FROM (VALUES (1::int128)) s(v) WHERE false;
+ stddev_samp | stddev_pop | var_samp | var_pop 
+-------------+------------+----------+---------
+             |            |          |        
+(1 row)
+
