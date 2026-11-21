@@ -86,3 +86,13 @@ SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
 FROM (VALUES (1::int128), (NULL)) s(v);
 SELECT stddev_samp(v), stddev_pop(v), var_samp(v), var_pop(v)
 FROM (VALUES (1::int128)) s(v) WHERE false;
+
+--
+-- Bitwise aggregates
+--
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128), (10::int128)) s(v);
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128), (NULL)) s(v);
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128)) s(v) WHERE false;

@@ -72,6 +72,7 @@ SELECT sum(amount) FROM ledger;
   trigonometry, `bit_count()`, `width_bucket()`, `random()` and `to_char()`.
 - Statistical aggregates: `stddev_samp()`, `stddev_pop()`, `var_samp()` and
   `var_pop()`.
+- Bitwise aggregates: `bit_and()`, `bit_or()` and `bit_xor()`.
 - `generate_series()`, `scale()`, `min_scale()`, `trim_scale()`,
   `int128_inc()`, `int128_dec()` and `pg_size_pretty()`.
 - `int128range` and `int128multirange` range types, including GiST-indexed
@@ -438,6 +439,9 @@ GIN and BRIN do not support KNN ordering.
 | `stddev_pop(int128)` | `numeric` | population standard deviation; parallel safe |
 | `var_samp(int128)` | `numeric` | sample variance; parallel safe |
 | `var_pop(int128)` | `numeric` | population variance; parallel safe |
+| `bit_and(int128)` | `int128` | bitwise AND; parallel safe |
+| `bit_or(int128)` | `int128` | bitwise OR; parallel safe |
+| `bit_xor(int128)` | `int128` | bitwise XOR; parallel safe |
 
 `sum()` updates its transition value in place when running as an aggregate,
 so it does not allocate one value per input row. `avg()` accumulates an exact

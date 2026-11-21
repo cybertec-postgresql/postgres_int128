@@ -1028,6 +1028,27 @@ CREATE AGGREGATE var_pop(int128) (
     PARALLEL = SAFE
 );
 
+CREATE AGGREGATE bit_and(int128) (
+    SFUNC = int128_and,
+    STYPE = int128,
+    COMBINEFUNC = int128_and,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE bit_or(int128) (
+    SFUNC = int128_or,
+    STYPE = int128,
+    COMBINEFUNC = int128_or,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE bit_xor(int128) (
+    SFUNC = int128_xor,
+    STYPE = int128,
+    COMBINEFUNC = int128_xor,
+    PARALLEL = SAFE
+);
+
 --
 -- Series, scale and utility functions
 --

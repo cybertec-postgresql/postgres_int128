@@ -260,3 +260,27 @@ FROM (VALUES (1::int128)) s(v) WHERE false;
              |            |          |        
 (1 row)
 
+--
+-- Bitwise aggregates
+--
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128), (10::int128)) s(v);
+ bit_and | bit_or | bit_xor 
+---------+--------+---------
+ 8       | 14     | 6
+(1 row)
+
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128), (NULL)) s(v);
+ bit_and | bit_or | bit_xor 
+---------+--------+---------
+ 12      | 12     | 12
+(1 row)
+
+SELECT bit_and(v), bit_or(v), bit_xor(v)
+FROM (VALUES (12::int128)) s(v) WHERE false;
+ bit_and | bit_or | bit_xor 
+---------+--------+---------
+         |        | 
+(1 row)
+
