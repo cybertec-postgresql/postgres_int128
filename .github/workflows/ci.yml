@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg: [17, 18]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-${{ matrix.pg }} postgresql-server-dev-${{ matrix.pg }}
+
+      - name: Start PostgreSQL
+        run: |
+          sudo pg_ctlcluster ${{ matrix.pg }} main start
+          sudo -u postgres createuser -s runner
+
+      - name: Build
+        run: make PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config
+
+      - name: Install
+        run: sudo make install PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config
+
+      - name: Test
+        run: make installcheck PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config
