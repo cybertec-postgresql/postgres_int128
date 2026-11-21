@@ -1,0 +1,35 @@
+{
+  "name": "int128",
+  "abstract": "128-bit signed integer type for PostgreSQL",
+  "description": "Adds a native 128-bit signed integer type with checked arithmetic, casts, aggregates, range types, and btree, hash, GiST, SP-GiST, GIN and BRIN operator classes.",
+  "version": "1.0",
+  "maintainer": "Hans-Jürgen Schönig <hs@cybertec.at>",
+  "license": "postgresql",
+  "provides": {
+    "int128": {
+      "file": "int128--1.0.sql",
+      "version": "1.0"
+    }
+  },
+  "resources": {
+    "repository": {
+      "url": "https://github.com/cybertec-postgresql/postgres_int128.git",
+      "web": "https://github.com/cybertec-postgresql/postgres_int128"
+    }
+  },
+  "generated_by": "Hans-Jürgen Schönig",
+  "meta-spec": {
+    "version": "1.0.0",
+    "url": "https://pgxn.org/meta/spec.txt"
+  },
+  "tags": [
+    "int128",
+    "integer",
+    "numeric",
+    "btree",
+    "gist",
+    "spgist",
+    "gin",
+    "brin"
+  ]
+}
