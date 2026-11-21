@@ -137,6 +137,18 @@ SELECT width_bucket(0::int128, 0::int128, 10::int128, 0);
 ERROR:  count must be greater than zero
 SELECT width_bucket(0::int128, 10::int128, 10::int128, 2);
 ERROR:  lower bound cannot equal upper bound
+SELECT width_bucket(5::int128, ARRAY[0,10,20]::int128[]),
+       width_bucket((-1)::int128, ARRAY[0,10,20]::int128[]),
+       width_bucket(25::int128, ARRAY[0,10,20]::int128[]);
+ width_bucket | width_bucket | width_bucket 
+--------------+--------------+--------------
+            1 |            0 |            3
+(1 row)
+
+SELECT width_bucket(5::int128, ARRAY[0,NULL,20]::int128[]);
+ERROR:  thresholds array must not contain NULLs
+SELECT width_bucket(5::int128, ARRAY[[0,10],[20,30]]::int128[]);
+ERROR:  thresholds must be one-dimensional array
 SELECT random(5::int128, 5::int128);
  random 
 --------

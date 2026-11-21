@@ -51,6 +51,11 @@ SELECT width_bucket(5::int128, 0::int128, 10::int128, 2),
        width_bucket(10::int128, 0::int128, 10::int128, 2);
 SELECT width_bucket(0::int128, 0::int128, 10::int128, 0);
 SELECT width_bucket(0::int128, 10::int128, 10::int128, 2);
+SELECT width_bucket(5::int128, ARRAY[0,10,20]::int128[]),
+       width_bucket((-1)::int128, ARRAY[0,10,20]::int128[]),
+       width_bucket(25::int128, ARRAY[0,10,20]::int128[]);
+SELECT width_bucket(5::int128, ARRAY[0,NULL,20]::int128[]);
+SELECT width_bucket(5::int128, ARRAY[[0,10],[20,30]]::int128[]);
 SELECT random(5::int128, 5::int128);
 SELECT random(1::int128, 10::int128) BETWEEN 1 AND 10 AS in_range;
 SELECT random(10::int128, 1::int128);

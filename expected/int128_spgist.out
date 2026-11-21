@@ -129,4 +129,29 @@ SELECT count(*) FROM int128_spgist_same WHERE v > 5::int128;
 (1 row)
 
 RESET enable_seqscan;
+--
+-- KNN ordering
+--
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT v FROM int128_spgist WHERE v IS NOT NULL
+ORDER BY v <-> '500300000000000000000'::int128 LIMIT 3;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Limit
+   ->  Index Scan using int128_spgist_idx on int128_spgist
+         Index Cond: (v IS NOT NULL)
+         Order By: (v <-> '500300000000000000000'::int128)
+(4 rows)
+
+SELECT v FROM int128_spgist WHERE v IS NOT NULL
+ORDER BY v <-> '500300000000000000000'::int128 LIMIT 3;
+           v           
+-----------------------
+ 500000000000000000000
+ 501000000000000000000
+ 499000000000000000000
+(3 rows)
+
+RESET enable_seqscan;
 DROP TABLE int128_spgist, int128_spgist_extreme, int128_spgist_same;

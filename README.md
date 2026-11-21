@@ -62,6 +62,7 @@ SELECT sum(amount) FROM ledger;
   smaller integer types.
 - btree, hash, GiST, SP-GiST, GIN and BRIN operator classes, including BRIN
   `minmax` and `minmax-multi`.
+- btree skip-scan support on PostgreSQL 18 and later.
 - GiST support for exclusion constraints and index-only scans.
 - SP-GiST support using a balanced binary search tree over the 128-bit
   value.
@@ -75,7 +76,7 @@ SELECT sum(amount) FROM ledger;
   `int128_inc()`, `int128_dec()` and `pg_size_pretty()`.
 - `int128range` and `int128multirange` range types, including GiST-indexed
   range columns.
-- GiST KNN ordering through the `<->` operator.
+- GiST and SP-GiST KNN ordering through the `<->` operator.
 - Sort support, btree deduplication and `in_range` support for window
   functions.
 - Works as a primary key, unique key, foreign key, hash/range partition key,
@@ -226,6 +227,7 @@ out-of-range shifts on `bigint`:
 | `int128_inc(int128)` | `int128` | add one |
 | `int128_dec(int128)` | `int128` | subtract one |
 | `pg_size_pretty(int128)` | `text` | human-readable size |
+| `width_bucket(int128, int128[])` | `integer` | array-threshold form |
 | `int128_dist(int128, int128)` | `int128` | absolute difference, used by `<->` |
 
 `gcd()` and `lcm()` follow the same conventions as their `bigint`
@@ -323,7 +325,9 @@ SELECT 2.5::numeric::int128, 2.5::float8::int128;
 
 Supports `=`, `<>`, `<`, `<=`, `>`, `>=`, `ORDER BY`, `DISTINCT`, `GROUP BY`,
 `IN`, `BETWEEN`, unique constraints, primary keys, foreign keys, range
-partitioning, merge joins and the `min()`/`max()` index optimisation.
+partitioning, merge joins and the `min()`/`max()` index optimisation. On
+PostgreSQL 18 and later it also provides skip-scan support for multicolumn
+indexes.
 
 ```sql
 CREATE INDEX ledger_id_idx ON ledger (id);
@@ -380,7 +384,8 @@ CREATE INDEX ledger_id_spgist ON ledger USING spgist (id);
 ```
 
 SP-GiST is a good choice for read-mostly tables with random insert order.
-It does not support exclusion constraints or index-only scans.
+It does not support exclusion constraints or index-only scans. KNN ordering
+(`ORDER BY id <-> value`) is supported through the `<->` operator.
 
 ### GIN — `int128_gin_ops` (default)
 
@@ -419,8 +424,7 @@ where it is orders of magnitude smaller than a btree index.
 
 ### Not provided
 
-KNN ordering is supported only by GiST. SP-GiST does not provide a `<->`
-operator or distance support function.
+GIN and BRIN do not support KNN ordering.
 
 ## Aggregates
 
@@ -493,8 +497,8 @@ SELECT * FROM windows WHERE span && '[100,200)'::int128range;
 ## Limitations
 
 - No typmod support (`int128(10)` is not a thing).
-- GiST KNN ordering uses `double precision` distances, so it is approximate
-  for values beyond 2^53.
+- GiST and SP-GiST KNN ordering use `double precision` distances, so they
+  are approximate for values beyond 2^53.
 - GIN range scans are correct but not selective; prefer btree for range
   predicates. GIN does not support `<>`.
 - Integer literals larger than `bigint` are typed as `numeric` by the
@@ -527,11 +531,11 @@ and BRIN operator classes. The suite is split into seven files:
 | --- | --- |
 | `int128` | I/O, arithmetic, bitwise, comparisons, hashing, binary output, aggregates, window frames, type integration, opclass validation, range types |
 | `int128_casts` | Every cast in both directions, rounding and range errors |
-| `int128_index` | btree, hash, BRIN minmax and minmax-multi, joins, primary/foreign keys, partitioning |
+| `int128_index` | btree, hash, BRIN minmax and minmax-multi, joins, primary/foreign keys, partitioning, btree skip support |
 | `int128_gist` | GiST scans, index-only scans, KNN ordering, exclusion constraints, extreme values |
-| `int128_spgist` | SP-GiST scans, extreme values, all-same split path |
+| `int128_spgist` | SP-GiST scans, KNN ordering, extreme values, all-same split path |
 | `int128_gin` | GIN equality, ranges, `= ANY`, pending list, multicolumn GIN |
-| `int128_math` | Rounding, powers, roots, logs, trigonometry, `bit_count`, `width_bucket`, `random`, `to_char`, `generate_series`, `scale`, `int128_inc`/`dec`, `pg_size_pretty`, `int128_dist`, statistical aggregates |
+| `int128_math` | Rounding, powers, roots, logs, trigonometry, `bit_count`, `width_bucket` (both forms), `random`, `to_char`, `generate_series`, `scale`, `int128_inc`/`dec`, `pg_size_pretty`, `int128_dist`, statistical aggregates |
 
 With a running server and the extension installed:
 

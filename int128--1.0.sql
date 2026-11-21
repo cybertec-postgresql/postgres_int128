@@ -1105,3 +1105,32 @@ CREATE TYPE int128range AS RANGE (
     subtype = int128,
     subtype_diff = int128range_subdiff
 );
+
+--
+-- Array-threshold width_bucket
+--
+
+CREATE FUNCTION width_bucket(int128, int128[])
+RETURNS int4
+AS 'MODULE_PATHNAME', 'int128_width_bucket_array'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+--
+-- SP-GiST KNN
+--
+
+ALTER OPERATOR FAMILY int128_spgist_ops USING spgist ADD
+    OPERATOR 15 <-> (int128, int128) FOR ORDER BY int128_ops;
+
+--
+-- btree skip support (PostgreSQL 18+)
+--
+
+DO $$
+BEGIN
+    IF current_setting('server_version_num')::int >= 180000 THEN
+        EXECUTE 'CREATE FUNCTION int128_skipsupport(internal) RETURNS void AS ''MODULE_PATHNAME'', ''int128_skipsupport'' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE';
+        EXECUTE 'ALTER OPERATOR FAMILY int128_ops USING btree ADD FUNCTION 6 (int128, int128) int128_skipsupport(internal)';
+    END IF;
+END
+$$;

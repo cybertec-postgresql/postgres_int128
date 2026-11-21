@@ -36,10 +36,14 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgrprotos.h"
 #include "utils/numeric.h"
 #include "utils/sortsupport.h"
+#if PG_VERSION_NUM >= 180000
+#include "utils/skipsupport.h"
+#endif
 #include "varatt.h"
 
 PG_MODULE_MAGIC;
@@ -1631,6 +1635,17 @@ int128_spgist_range_matches(bool lo_inf, int128 lo,
 	}
 }
 
+static double
+int128_spgist_range_distance(bool lo_inf, int128 lo, bool hi_inf, int128 hi,
+							 int128 query)
+{
+	if (!lo_inf && query < lo)
+		return (double) lo - (double) query;
+	if (!hi_inf && query > hi)
+		return (double) query - (double) hi;
+	return 0.0;
+}
+
 PG_FUNCTION_INFO_V1(int128_spgist_inner_consistent);
 Datum
 int128_spgist_inner_consistent(PG_FUNCTION_ARGS)
@@ -1646,6 +1661,8 @@ int128_spgist_inner_consistent(PG_FUNCTION_ARGS)
 
 	out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
 	out->levelAdds = (int *) palloc(sizeof(int) * in->nNodes);
+	if (in->norderbys > 0)
+		out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
 	out->nNodes = 0;
 
 	for (i = 0; i < in->nNodes; i++)
@@ -1703,6 +1720,20 @@ int128_spgist_inner_consistent(PG_FUNCTION_ARGS)
 		{
 			out->nodeNumbers[out->nNodes] = i;
 			out->levelAdds[out->nNodes] = 1;
+			if (in->norderbys > 0)
+			{
+				double	   *dist = (double *) palloc(sizeof(double) * in->norderbys);
+				int			k;
+
+				for (k = 0; k < in->norderbys; k++)
+				{
+					int128		query = int128_get(in->orderbys[k].sk_argument);
+
+					dist[k] = int128_spgist_range_distance(lo_inf, lo, hi_inf, hi,
+														   query);
+				}
+				out->distances[out->nNodes] = dist;
+			}
 			out->nNodes++;
 		}
 	}
@@ -1755,6 +1786,20 @@ int128_spgist_leaf_consistent(PG_FUNCTION_ARGS)
 
 		if (!res)
 			break;
+	}
+
+	if (res && in->norderbys > 0)
+	{
+		double	   *dist = (double *) palloc(sizeof(double) * in->norderbys);
+		int			k;
+
+		for (k = 0; k < in->norderbys; k++)
+		{
+			int128		query = int128_get(in->orderbys[k].sk_argument);
+
+			dist[k] = fabs((double) val - (double) query);
+		}
+		out->distances = dist;
 	}
 
 	PG_RETURN_BOOL(res);
@@ -2644,3 +2689,85 @@ int128_gist_distance(PG_FUNCTION_ARGS)
 
 	PG_RETURN_FLOAT8(dist);
 }
+
+PG_FUNCTION_INFO_V1(int128_width_bucket_array);
+Datum
+int128_width_bucket_array(PG_FUNCTION_ARGS)
+{
+	int128		operand = int128_get(PG_GETARG_DATUM(0));
+	ArrayType  *thresholds = PG_GETARG_ARRAYTYPE_P(1);
+	char	   *data;
+	int			left;
+	int			right;
+
+	if (ARR_NDIM(thresholds) > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("thresholds must be one-dimensional array")));
+	if (array_contains_nulls(thresholds))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("thresholds array must not contain NULLs")));
+
+	data = (char *) ARR_DATA_PTR(thresholds);
+	left = 0;
+	right = ArrayGetNItems(ARR_NDIM(thresholds), ARR_DIMS(thresholds));
+
+	while (left < right)
+	{
+		int			mid = (left + right) / 2;
+		int128		threshold;
+
+		memcpy(&threshold, data + mid * sizeof(int128), sizeof(int128));
+		if (operand < threshold)
+			right = mid;
+		else
+			left = mid + 1;
+	}
+
+	PG_RETURN_INT32(left);
+}
+
+#if PG_VERSION_NUM >= 180000
+static Datum
+int128_decrement(Relation rel, Datum existing, bool *underflow)
+{
+	int128		v = int128_get(existing);
+
+	if (v == PG_INT128_MIN)
+	{
+		*underflow = true;
+		return (Datum) 0;
+	}
+	*underflow = false;
+	return int128_make(v - 1);
+}
+
+static Datum
+int128_increment(Relation rel, Datum existing, bool *overflow)
+{
+	int128		v = int128_get(existing);
+
+	if (v == PG_INT128_MAX)
+	{
+		*overflow = true;
+		return (Datum) 0;
+	}
+	*overflow = false;
+	return int128_make(v + 1);
+}
+
+PG_FUNCTION_INFO_V1(int128_skipsupport);
+Datum
+int128_skipsupport(PG_FUNCTION_ARGS)
+{
+	SkipSupport sksup = (SkipSupport) PG_GETARG_POINTER(0);
+
+	sksup->decrement = int128_decrement;
+	sksup->increment = int128_increment;
+	sksup->low_elem = int128_make(PG_INT128_MIN);
+	sksup->high_elem = int128_make(PG_INT128_MAX);
+
+	PG_RETURN_VOID();
+}
+#endif

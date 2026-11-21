@@ -255,6 +255,24 @@ SELECT count(*) FROM int128_hashpart;
 (1 row)
 
 --
+-- btree skip support (PostgreSQL 18+)
+--
+DO $$
+BEGIN
+    IF current_setting('server_version_num')::int >= 180000 THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_amproc
+            WHERE amprocfamily = (SELECT opcfamily FROM pg_opclass
+                                  WHERE opcname = 'int128_ops'
+                                    AND opcmethod = (SELECT oid FROM pg_am WHERE amname = 'btree'))
+              AND amprocnum = 6
+        ) THEN
+            RAISE EXCEPTION 'int128 btree skip support is missing';
+        END IF;
+    END IF;
+END
+$$;
+--
 -- Cleanup
 --
 DROP TABLE int128_btree, int128_hash, int128_brin, int128_brin_multi;
